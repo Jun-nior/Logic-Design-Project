@@ -9,26 +9,101 @@ from keras.models import load_model
 import time
 import requests
 import threading
+from Adafruit_IO import MQTTClient
+
+AIO_KEY = "aio_AqXF50XhVsRavK3GlO6rBmd34V1V"
+AIO_USERNAME = "Unray"
+AIO_FEED_ID = "aicamera"
+CONFIDENCE = 0.1
+timer1=4
+img0 = 0
+img1 = 1
+img2 = 2
+img3 = 3
+sendToAda = 0
+img0 = 0
+img1 = 1
+img2 = 2
+img3 = 3
+sendToAda = 0
+def imageProcess(imgResult):
+    global img0, img1, img2, img3
+    img0 = img1
+    img1 = img2
+
+    img2 = imgResult
+    if img0 == img1 and img1 == img2:
+        if img3 != img2:
+            img3 = img2
+            #if img2 > -1:
+            return 1
+        else:
+            #if img3 > -1:
+            return -1#same pressed state -> use old data -> do not send to ada
+    return -1 #do not send to ada
+
+
+def connected(client):
+    print("Ket noi thanh cong ...")
+    client.subscribe(AIO_FEED_ID)
+
+def subscribe(client , userdata , mid , granted_qos):
+    print("Subscribe thanh cong ...")
+
+def disconnected(client):
+    print("Ngat ket noi ...")
+    sys.exit (1)
+
+def message(client , feed_id , payload):
+    print("Nhan du lieu: " + payload)
+
+client = MQTTClient(AIO_USERNAME , AIO_KEY)
+client.on_connect = connected
+client.on_disconnect = disconnected
+client.on_message = message
+client.on_subscribe = subscribe
+client.connect()
+client.loop_background()
+
 
 def up():
     print("Up")
+    client.publish("mecanum-behavior", "up")
 
 def left():
     print("Left")
+    client.publish("mecanum-behavior", "left")
 
 def right():
     print("Right")
+    client.publish("mecanum-behavior", "right")
 
 def down():
     print("Down")
+    client.publish("mecanum-behavior", "down")
 
 def automatic():
     print("Automatic")
+    client.publish("mecanum-behavior", "auto")
 
-
+old_command=""
 def print_AI_result():
+    global timer1
+    global old_command
+    timer1-=1
     AI_result=image_detector()
+
     command, confident_score=AI_result
+    if old_command!=command:
+        timer1=4
+    if CONFIDENCE > 0.988:
+        global sendToAda
+        sendToAda = imageProcess(int(command[0]))
+    if sendToAda == 1 or timer1<=0:
+        client.publish(AIO_FEED_ID, command)
+        sendToAda = 0
+        old_command=command
+        timer1=4
     AI_stream.delete(1.0, tk.END)
     cs_stream.delete(1.0, tk.END)
     AI_stream.insert(tk.END, "AI Result: " + command)
@@ -40,6 +115,7 @@ def print_AI_result():
 streaming = False
 first_time = True
 streaming_lock = threading.Lock()
+
 # check ip address function
 def check_ip():
     global first_time
@@ -90,7 +166,7 @@ def update_video():
         
 
     # Schedule the next update after a delay (in milliseconds)
-    canvas.after(1, update_video)
+    canvas.after(100, update_video)
     
 
 img_url = 'http://192.168.2.43/capture'
@@ -131,6 +207,10 @@ def image_detector():
             max_confidence = output[i]
             max_index = i
     print(max_index, max_confidence)
+    #take confidence
+    global CONFIDENCE
+    CONFIDENCE = max_confidence
+
     file = open("C://Trung Main//231//Logic Design Project//trained_signs//labels.txt",encoding="utf8")
     data = file.read().split("\n")
     print("AI Result: ", data[max_index])
@@ -153,7 +233,7 @@ def prediction():
                 fp.close()
                 #image = cv2.imread('Pics//greenland_' + str(counter - 1) +'.png')
                 #cv2.imshow('AI Camera', response.content)
-                result = image_detector()
+                #result = image_detector()
                 print_AI_result()
                 # requests.get(control_url + result)
 
