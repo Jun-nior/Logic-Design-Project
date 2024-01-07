@@ -98,7 +98,7 @@ def update_confidence_bars(confidence_values, labels):
     for i, (confidence, label) in enumerate(zip(confidence_values, labels)):
         normalized_width = confidence * 100
         bar_start = max_label_width * 9 # Adjusted starting position
-        canvas1.create_rectangle(bar_start, (i+0.3) * (bar_height + 10), bar_start + normalized_width*2, (i + 1) * bar_height + i * 10, fill="blue")
+        canvas1.create_rectangle(bar_start, (i+0.3) * (bar_height + 10), bar_start + normalized_width*2, (i + 1) * bar_height + i * 10, fill="blue", outline="black", width=2,  activefill="lightgreen", activeoutline="green")
         canvas1.create_text(bar_start-10, (i+0.7) * bar_height + i * 10, anchor=tk.E, text=label, font=("Arial", 10, "bold"))
 
 old_command=""
