@@ -25,6 +25,8 @@ img1 = 1
 img2 = 2
 img3 = 3
 sendToAda = 0
+pressCounter = 5
+
 def imageProcess(imgResult):
     global img0, img1, img2, img3
     img0 = img1
@@ -34,11 +36,17 @@ def imageProcess(imgResult):
     if img0 == img1 and img1 == img2:
         if img3 != img2:
             img3 = img2
+            pressCounter = 5
             #if img2 > -1:
             return 1
         else:
             #if img3 > -1:
-            return 1#same pressed state -> use old data -> do not send to ada
+            global pressCounter
+            pressCounter = pressCounter - 1
+            if pressCounter == 0:
+                pressCounter = 5
+                return 1
+            #return 1#same pressed state -> use old data -> do not send to ada
     return -1 #do not send to ada
 
 
