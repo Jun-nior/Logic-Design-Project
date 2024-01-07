@@ -89,6 +89,18 @@ def automatic():
     print("Automatic")
     client.publish("mecanum-behavior", "auto")
 
+def update_confidence_bars(confidence_values, labels):
+    canvas1.delete("all")  # Clear previous bars
+    bar_height = 20
+    max_confidence = max(confidence_values)
+    max_label_width = max(len(label) for label in labels)
+
+    for i, (confidence, label) in enumerate(zip(confidence_values, labels)):
+        normalized_width = confidence * 100
+        bar_start = max_label_width * 9 # Adjusted starting position
+        canvas1.create_rectangle(bar_start, (i+0.3) * (bar_height + 10), bar_start + normalized_width*2, (i + 1) * bar_height + i * 10, fill="blue")
+        canvas1.create_text(bar_start-10, (i+0.7) * bar_height + i * 10, anchor=tk.E, text=label, font=("Arial", 10, "bold"))
+
 old_command=""
 def print_AI_result():
     global timer1
@@ -96,7 +108,7 @@ def print_AI_result():
     timer1-=1
     AI_result=image_detector()
 
-    command, confident_score=AI_result
+    command, confident_score, confidence_values=AI_result
     if old_command!=command:
         timer1=4
     if CONFIDENCE > 0.988:
@@ -111,6 +123,7 @@ def print_AI_result():
     cs_stream.delete(1.0, tk.END)
     AI_stream.insert(tk.END, command)
     cs_stream.insert(tk.END, confident_score)
+    update_confidence_bars(confidence_values,labels)
     
 
 
@@ -218,7 +231,7 @@ def image_detector():
     data = file.read().split("\n")
     print("AI Result: ", data[max_index])
     #client.publish("ai", data[max_index])
-    return data[max_index],max_confidence
+    return data[max_index],max_confidence,output
 
 #image = cv2.imread('Pics/greenland_' + str(counter) +'.png')
 
@@ -282,42 +295,42 @@ btn_toggle_stream.pack()
 # button up
 frame_up = tk.Frame(root)
 frame_up.pack(pady=10)
-frame_up.place(relx=0.75, rely=0.3, anchor="center")
+frame_up.place(relx=0.75, rely=0.2, anchor="center")
 up_stream = tk.Button(frame_up, text="\u2191", command=up, width=10, bg="#8FED8F", fg="black", relief=tk.RIDGE, borderwidth=5, font=("Calibri", 11, "bold"))
 up_stream.pack()
 
 #button down
 frame_down = tk.Frame(root)
 frame_down.pack(pady=10)
-frame_down.place(relx=0.75, rely=0.4, anchor="center")
+frame_down.place(relx=0.75, rely=0.3, anchor="center")
 down_stream = tk.Button(frame_down, text="\u2193", command=down, width=10, bg="#8FED8F", fg="black", relief=tk.RIDGE, borderwidth=5, font=("Calibri", 11, "bold"))
 down_stream.pack()
 
 #button left
 frame_left = tk.Frame(root)
 frame_left.pack(pady=10)
-frame_left.place(relx=0.65, rely=0.4, anchor="center")
+frame_left.place(relx=0.65, rely=0.3, anchor="center")
 left_stream = tk.Button(frame_left, text="\u2190", command=left, width=10, bg="#8FED8F", fg="black", relief=tk.RIDGE, borderwidth=5, font=("Calibri", 11, "bold"))
 left_stream.pack()
 
 #button right
 frame_right = tk.Frame(root)
 frame_right.pack(pady=10)
-frame_right.place(relx=0.85, rely=0.4, anchor="center")
+frame_right.place(relx=0.85, rely=0.3, anchor="center")
 right_stream = tk.Button(frame_right, text="\u2192", command=right, width=10, bg="#8FED8F", fg="black", relief=tk.RIDGE, borderwidth=5, font=("Calibri", 11, "bold"))
 right_stream.pack()
 
 #button automatic
 frame_automatic = tk.Frame(root)
 frame_automatic.pack(pady=10)
-frame_automatic.place(relx=0.75, rely=0.5, anchor="center")
+frame_automatic.place(relx=0.75, rely=0.4, anchor="center")
 automatic_stream = tk.Button(frame_automatic, text="Automatic Run", command=automatic, width=40, bg="#FFFF00", fg="black", relief=tk.GROOVE, borderwidth=5, font=("Calibri", 11))
 automatic_stream.pack()
 
 #print AI result
 frame_ai=tk.Frame(root)
 frame_ai.pack(pady=10)
-frame_ai.place(relx=0.75, rely=0.6, anchor="center")
+frame_ai.place(relx=0.75, rely=0.5, anchor="center")
 AI_stream = tk.Text(frame_ai, height=1, width=30)
 AI_stream.grid(row=0,column=1,padx=5)
 label_ai=tk.Label(frame_ai, text="AI result: ", font=("Arial", 11), bg="#8FED8F")
@@ -327,12 +340,28 @@ label_ai.grid(row=0,column=0,padx=5)
 #print confident score
 frame_cs=tk.Frame(root)
 frame_cs.pack(pady=10)
-frame_cs.place(relx=0.75, rely=0.7, anchor="center")
+frame_cs.place(relx=0.75, rely=0.6, anchor="center")
 cs_stream = tk.Text(frame_cs, height=1, width=30)
 cs_stream.grid(row=0,column=1,padx=5)
 label_cs=tk.Label(frame_cs, text="Confident score: ", font=("Arial", 11), bg="#8FED8F")
 label_cs.grid(row=0,column=0,padx=5)
 # cs_stream.pack()
+#create bar
+frame_bar=tk.Frame(root)
+frame_bar.place(relx=0.75, rely=0.8, anchor="center")
+canvas1 = tk.Canvas(frame_bar, width=300, height=150, bg="white")
+canvas1.grid(row=0, column=0, padx=5)
+confidence_values = [1, 1, 1, 1, 1]
+labels = ["Turn left", "Turn right", "Go straight", "Stop", "U turn"]
+
+max_label_width = max(len(label) for label in labels)
+
+for i,  label in enumerate(labels):
+        bar_start = max_label_width * 9 # Adjusted starting position
+        canvas1.create_text(bar_start-10, (i+0.7) * 20 + i * 10, anchor=tk.E, text=label, font=("Arial", 10, "bold"))
+
+# Initial update of confidence bars with labels
+# update_confidence_bars(confidence_values, labels)
 
 # Call the update_video function to start displaying the video feed
 update_video_thread = threading.Thread(target=update_video)
