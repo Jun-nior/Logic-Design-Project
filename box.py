@@ -10,11 +10,15 @@ import time
 import requests
 import threading
 from Adafruit_IO import MQTTClient
+import paho.mqtt.client as mqtt
 
 AIO_KEY = "aio_AqXF50XhVsRavK3GlO6rBmd34V1V"
 AIO_USERNAME = "Unray"
 AIO_FEED_ID = "aicamera"
+BROKER_ADDRESS = "192.168.1.7"
 CONFIDENCE = 0.1
+
+
 img0 = 0
 img1 = 1
 img2 = 2
@@ -27,42 +31,36 @@ img3 = 3
 sendToAda = 0
 pressCounter = 5
 
-def imageProcess(imgResult):
-    global img0, img1, img2, img3
-    img0 = img1
-    img1 = img2
-
-    img2 = imgResult
-    if img0 == img1 and img1 == img2:
-        if img3 != img2:
-            img3 = img2
-            pressCounter = 5
-            #if img2 > -1:
-            return 1
-        else:
-            #if img3 > -1:
-            global pressCounter
-            pressCounter = pressCounter - 1
-            if pressCounter == 0:
-                pressCounter = 5
-                return 1
-            #return 1#same pressed state -> use old data -> do not send to ada
-    return -1 #do not send to ada
-
-
 def connected(client):
-    print("Ket noi thanh cong ...")
+    print("Connected to adafruit")
     client.subscribe(AIO_FEED_ID)
 
 def subscribe(client , userdata , mid , granted_qos):
-    print("Subscribe thanh cong ...")
+    print("Subscribe successfully ...")
 
 def disconnected(client):
-    print("Ngat ket noi ...")
+    print("Disconnected ...")
     sys.exit (1)
 
 def message(client , feed_id , payload):
-    print("Nhan du lieu: " + payload)
+    print("Captured sign: " + payload)
+
+
+def on_connect(client, userdata, flags, rc): #local
+    print("Connected with broker")
+
+def on_message(client, userdata, msg): #local
+    print(msg.topic+" "+str(msg.payload))
+
+
+client1 = mqtt.Client()
+# client1.on_connect = on_connect
+# client1.on_message = on_message
+client1.connect(BROKER_ADDRESS, 1883, 60)
+# client1.loop_forever()
+client1.publish("test", "hello")
+
+
 
 client = MQTTClient(AIO_USERNAME , AIO_KEY)
 client.on_connect = connected
@@ -92,6 +90,29 @@ def down():
 def automatic():
     print("Automatic")
     client.publish("mecanum-behavior", "auto")
+
+
+def imageProcess(imgResult):
+    global img0, img1, img2, img3
+    img0 = img1
+    img1 = img2
+
+    img2 = imgResult
+    if img0 == img1 and img1 == img2:
+        if img3 != img2:
+            img3 = img2
+            pressCounter = 5
+            #if img2 > -1:
+            return 1
+        else:
+            #if img3 > -1:
+            global pressCounter
+            pressCounter = pressCounter - 1
+            if pressCounter == 0:
+                pressCounter = 5
+                return 1
+            #return 1#same pressed state -> use old data -> do not send to ada
+    return -1 #do not send to ada
 
 
 def print_AI_result():
