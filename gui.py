@@ -5,9 +5,11 @@ import time
 import threading
 import requests
 from keras.models import load_model
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageTk
 import numpy as np
-#import cv2
+from urllib.request import urlopen
+from tkinter import messagebox, Canvas
+import cv2
 from Adafruit_IO import MQTTClient
 import paho.mqtt.client as mqtt
 
@@ -466,7 +468,7 @@ confidentScoreUturnLabel.place(
 cameraFrame = CTkFrame(
     master=app,
     width=400,
-    height=400
+    height=400,
 )
 cameraFrame.place(
     relx=0.03,
@@ -547,6 +549,45 @@ AIresultNameLabel.place(
 )
 
 
+def update_video():
+    streaming=True
+    if streaming:
+        # Replace this URL with the actual URL for your ESP32 camera stream
+        url = "http://192.168.1.6/capture"
+        
+        # Read the video frame from the ESP32 camera
+        img_resp = urlopen(url)
+        img_arr = np.array(bytearray(img_resp.read()), dtype=np.uint8)
+        frame = cv2.imdecode(img_arr, -1)
+
+        # Convert the OpenCV BGR image to RGB
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # Convert the NumPy array to a Tkinter-compatible PhotoImage
+        image = Image.fromarray(rgb_frame)
+        photo = CTkImage(light_image=image, size=(400, 400))
+        #photo = ImageTk.PhotoImage(image=image)
+
+        # Update the canvas with the new video frame
+        canvas.configure(image=photo)
+        canvas.image = photo
+
+        #give prediction and print the result
+        # prediction()
+        # print_AI_result()
+        time.sleep(1)
+    canvas.after(100, update_video)
+canvas = CTkLabel(
+    master=cameraFrame, 
+    width=400, 
+    height=400,
+    text=""
+)
+canvas.place(
+    relx=0,
+    rely=0,
+    anchor="nw"
+)
 ##################### PROCESS #####################
 AIO_KEY = "aio_AqXF50XhVsRavK3GlO6rBmd34V1V"
 AIO_USERNAME = "Unray"
@@ -742,8 +783,10 @@ def updateConfidentScore():
         confidentScoreUturnVar.set(str(round(uturnScore * 100, 3))+ " %")
         time.sleep(0.3)
 
+update_video_thread = threading.Thread(target=update_video)
 one = threading.Thread(target=updateConfidentScore)
 mainThread = threading.Thread(target=main)
+update_video_thread.start()
 mainThread.start()
 one.start()
 app.mainloop()
