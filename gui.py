@@ -37,7 +37,7 @@ set_appearance_mode("dark")
 set_default_color_theme("dark-blue")
 
 app = CTk()
-app.geometry("1100x800")
+app.geometry("1100x600")
 
 CONTROL_BUTTON_COLOR = "#6600ff"
 CONTROL_BUTTON_HOVER = "#4158D0"
@@ -45,22 +45,24 @@ CONRTROL_BUTTON_RADIUS = 30
 controlFrame= CTkFrame(
     master=app,
     width=350,
-    height=200
+    height=200,
+    fg_color="transparent"
 )
 
 controlFrame.place(
-    relx=0.45,
-    rely=0.2
+    relx=0.4,
+    rely=0.05
 )
 
 controlArmFrame = CTkFrame(
     master=app,
-    width=200,
-    height = 200
+    width=250,
+    height=200,
+    fg_color="transparent"
 )
 controlArmFrame.place(
-    relx=0.78,
-    rely=0.2
+    relx=0.75,
+    rely=0.05
 )
 
 def verticalArmEvent(verticalArmValue):
@@ -69,14 +71,14 @@ def verticalArmEvent(verticalArmValue):
 
 verticalArmSlider = CTkSlider(
     master=controlArmFrame,
-    width=200,
+    width=250,
     height=20,
     progress_color="#666699",
     button_color="#ccccff",
     from_=0,
     to=90,
     command=verticalArmEvent,
-    number_of_steps=90
+    number_of_steps=90,
 )
 verticalArmSlider.place(
     relx=0,
@@ -128,7 +130,7 @@ def horizontalArmEvent(horizontalArmValue):
 
 horizontalArmSlider = CTkSlider(
     master=controlArmFrame,
-    width=200,
+    width=250,
     height=20,
     progress_color="#666699",
     button_color="#ccccff",
@@ -226,31 +228,34 @@ automaticButton.place(
 imageInfoFrame = CTkFrame(
     master=app,
     width=350,
-    height=250
+    height=250,
+    fg_color="transparent"
 )
 imageInfoFrame.place(
-    relx=0.53,
-    rely=0.5
+    relx=0.48,
+    rely=0.45
 )
 
 imageInfoLabelsFrame = CTkFrame(
     master=app,
     width=80,
-    height=250
+    height=250,
+    fg_color="transparent"
 )
 imageInfoLabelsFrame.place(
-    relx=0.45,
-    rely=0.5
+    relx=0.4,
+    rely=0.45
 )
 
 confidentScoreLabelsFrame = CTkFrame(
     master=app,
     width=80,
-    height=250
+    height=250,
+    fg_color="transparent"
 )
 confidentScoreLabelsFrame.place(
-    relx=0.85,
-    rely=0.5
+    relx=0.8,
+    rely=0.45
 )
 
 confidentLeftBar = CTkProgressBar(
@@ -392,8 +397,9 @@ confidentScoreLeftVar = StringVar()
 confidentScoreLeftLabel = CTkLabel(
     master=confidentScoreLabelsFrame,
     width=80,
-    height=50,
+    height=30,
     textvariable=confidentScoreLeftVar,
+    justify=tkinter.CENTER
 )
 confidentScoreLeftLabel.place(
     relx=0,
@@ -405,8 +411,9 @@ confidentScoreRightVar = StringVar()
 confidentScoreRightLabel = CTkLabel(
     master=confidentScoreLabelsFrame,
     width=80,
-    height=50,
+    height=30,
     textvariable=confidentScoreRightVar,
+    justify=tkinter.CENTER
 )
 confidentScoreRightLabel.place(
     relx=0,
@@ -418,8 +425,9 @@ confidentScoreUpVar = StringVar()
 confidentScoreUpLabel = CTkLabel(
     master=confidentScoreLabelsFrame,
     width=80,
-    height=50,
+    height=30,
     textvariable=confidentScoreUpVar,
+    justify=tkinter.CENTER
 )
 confidentScoreUpLabel.place(
     relx=0,
@@ -431,8 +439,9 @@ confidentScoreStopVar = StringVar()
 confidentScoreStopLabel = CTkLabel(
     master=confidentScoreLabelsFrame,
     width=80,
-    height=50,
+    height=30,
     textvariable=confidentScoreStopVar,
+    justify=tkinter.CENTER
 )
 confidentScoreStopLabel.place(
     relx=0,
@@ -444,8 +453,9 @@ confidentScoreUturnVar = StringVar()
 confidentScoreUturnLabel = CTkLabel(
     master=confidentScoreLabelsFrame,
     width=80,
-    height=50,
+    height=30,
     textvariable=confidentScoreUturnVar,
+    justify=tkinter.CENTER
 )
 confidentScoreUturnLabel.place(
     relx=0,
@@ -459,8 +469,8 @@ cameraFrame = CTkFrame(
     height=400
 )
 cameraFrame.place(
-    relx=0.05,
-    rely=0.2
+    relx=0.03,
+    rely=0.05
 )
 
 controlCameraFrame = CTkFrame(
@@ -469,7 +479,7 @@ controlCameraFrame = CTkFrame(
     height=100
 )
 controlCameraFrame.place(
-    relx=0.05,
+    relx=0.03,
     rely=0.75
 )
 
@@ -516,8 +526,8 @@ AIresultFrame = CTkFrame(
     height=100
 )
 AIresultFrame.place(
-    relx=0.45,
-    rely=0.83
+    relx=0.4,
+    rely=0.88
 )
 
 AIresultNameLabel = CTkLabel(
@@ -581,17 +591,17 @@ def on_subscribe(mosq, obj, mid, granted_qos):
 def on_publish(mosq, obj, mid):
     print(f"Mesage {mid} has been sent to broker")
 
-client = mqtt.Client()
-client.on_connect = on_connect
-client.on_message = on_message
-client.on_subscribe = on_subscribe
-client.on_publish = on_publish
-client.connect(BROKER_ADDRESS, 1883, 60)
-client.subscribe("test", 0)
-client.publish("test", "hello")
+# client = mqtt.Client()
+# client.on_connect = on_connect
+# client.on_message = on_message
+# client.on_subscribe = on_subscribe
+# client.on_publish = on_publish
+# client.connect(BROKER_ADDRESS, 1883, 60)
+# client.subscribe("test", 0)
+# client.publish("test", "hello")
 def mqttConnect():
     global client
-    client.loop_forever()
+    #client.loop_forever()
 mqttThread = threading.Thread(target=mqttConnect)
 mqttThread.start()
 
@@ -600,7 +610,8 @@ mqttThread.start()
 img_url = 'http://192.168.1.6/capture'
 #control_url = 'http://192.168.1.6/control?ai_camera='
 counter = 0
-model = load_model('C://Users//HOME//Desktop//code//LogicDesign//model//keras_model.h5')
+MODEL_FOLDER = 'C://Users//PCPV//Desktop//Code//LogicDesign//model//'
+model = load_model(MODEL_FOLDER + 'keras_model.h5')
 
 
 def image_detector():
@@ -641,7 +652,7 @@ def image_detector():
     #take confidence
     global CONFIDENCE
     CONFIDENCE = max_confidence
-    file = open("C://Users//HOME//Desktop//code//LogicDesign//model//labels.txt",encoding="utf8")
+    file = open(MODEL_FOLDER + "labels.txt",encoding="utf8")
     data = file.read().split("\n")
     print("AI Result: ", data[max_index])
     #client.publish("ai", data[max_index])
