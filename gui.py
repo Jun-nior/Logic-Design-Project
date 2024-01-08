@@ -7,7 +7,7 @@ import requests
 from keras.models import load_model
 from PIL import Image, ImageOps
 import numpy as np
-import cv2
+#import cv2
 from Adafruit_IO import MQTTClient
 import paho.mqtt.client as mqtt
 
@@ -65,7 +65,7 @@ controlArmFrame.place(
 
 def verticalArmEvent(verticalArmValue):
     print(verticalArmValue)
-    client.publish(AIO_FEED_ID[2], str(verticalArmValue))
+    client.publish(AIO_FEED_ID[2], str(int(verticalArmValue)))
 
 verticalArmSlider = CTkSlider(
     master=controlArmFrame,
@@ -124,7 +124,7 @@ def horizontalArmEvent(horizontalArmValue):
     # HORIZONTAL_ARM_1 = HORIZONTAL_ARM_2
     # HORIZONTAL_ARM_2 = int(horizontalArmValue)
     # if HORIZONTAL_ARM_0 == HORIZONTAL_ARM_1 and HORIZONTAL_ARM_1 == HORIZONTAL_ARM_2:
-    client.publish(AIO_FEED_ID[3], str(horizontalArmValue))
+    client.publish(AIO_FEED_ID[3], str(int(horizontalArmValue)))
 
 horizontalArmSlider = CTkSlider(
     master=controlArmFrame,
@@ -134,7 +134,7 @@ horizontalArmSlider = CTkSlider(
     button_color="#ccccff",
     from_=0,
     to=90,
-    command=verticalArmEvent,
+    command=horizontalArmEvent,
     number_of_steps=90
 )
 horizontalArmSlider.place(
@@ -541,7 +541,7 @@ AIresultNameLabel.place(
 AIO_KEY = "aio_AqXF50XhVsRavK3GlO6rBmd34V1V"
 AIO_USERNAME = "Unray"
 AIO_FEED_ID = ["aicamera", "mecanum-behavior", "vertical-arm", "horizontal-arm"]
-BROKER_ADDRESS = "192.168.1.5"
+BROKER_ADDRESS = "192.168.4.5"
 CONFIDENCE = 0.1
 OUPUT_PREDICT_SCORE = [0, 0, 0, 0, 0]
 ###### ADAFRRUIT ######
@@ -560,13 +560,13 @@ def disconnected(client):
 def message(client , feed_id , payload):
     print("Send to adafruit " + payload)
 
-client = MQTTClient(AIO_USERNAME , AIO_KEY)
-client.on_connect = connected
-client.on_disconnect = disconnected
-client.on_message = message
-client.on_subscribe = subscribe
-client.connect()
-client.loop_background()
+# client = MQTTClient(AIO_USERNAME , AIO_KEY)
+# client.on_connect = connected
+# client.on_disconnect = disconnected
+# client.on_message = message
+# client.on_subscribe = subscribe
+# client.connect()
+# client.loop_background()
 
 ###########local brocker###########
 def on_connect(client, userdata, flags, rc): 
@@ -581,22 +581,26 @@ def on_subscribe(mosq, obj, mid, granted_qos):
 def on_publish(mosq, obj, mid):
     print(f"Mesage {mid} has been sent to broker")
 
-# client1 = mqtt.Client()
-# client1.on_connect = on_connect
-# client1.on_message = on_message
-# client1.on_subscribe = on_subscribe
-# client1.on_publish = on_publish
-# client1.connect(BROKER_ADDRESS, 1883, 60)
-# client1.subscribe("test", 0)
-# client1.publish("test", "hello")
-# client1.loop_forever()
+client = mqtt.Client()
+client.on_connect = on_connect
+client.on_message = on_message
+client.on_subscribe = on_subscribe
+client.on_publish = on_publish
+client.connect(BROKER_ADDRESS, 1883, 60)
+client.subscribe("test", 0)
+client.publish("test", "hello")
+def mqttConnect():
+    global client
+    client.loop_forever()
+mqttThread = threading.Thread(target=mqttConnect)
+mqttThread.start()
 
 
 #img_url = 'http://192.168.98.215/capture'
 img_url = 'http://192.168.1.6/capture'
 #control_url = 'http://192.168.1.6/control?ai_camera='
 counter = 0
-model = load_model('C://Users//PCPV//Desktop//Code//LogicDesign//model//keras_model.h5')
+model = load_model('C://Users//HOME//Desktop//code//LogicDesign//model//keras_model.h5')
 
 
 def image_detector():
@@ -637,7 +641,7 @@ def image_detector():
     #take confidence
     global CONFIDENCE
     CONFIDENCE = max_confidence
-    file = open("C://Users//PCPV//Desktop//Code//LogicDesign//model//labels.txt",encoding="utf8")
+    file = open("C://Users//HOME//Desktop//code//LogicDesign//model//labels.txt",encoding="utf8")
     data = file.read().split("\n")
     print("AI Result: ", data[max_index])
     #client.publish("ai", data[max_index])
