@@ -12,7 +12,8 @@ from tkinter import messagebox, Canvas
 import cv2
 from Adafruit_IO import MQTTClient
 import paho.mqtt.client as mqtt
-
+global AI_RESULT
+AI_RESULT = -1
 
 
 def up():
@@ -44,11 +45,17 @@ app.geometry("1100x600")
 CONTROL_BUTTON_COLOR = "#6600ff"
 CONTROL_BUTTON_HOVER = "#4158D0"
 CONRTROL_BUTTON_RADIUS = 30
+COLOR_UP="#00ff00"
+COLOR_LEFT="#cc00cc"
+COLOR_RIGHT="#0000ff"
+COLOR_STOP="#ff1a1a"
+COLOR_UTURN="#ff9933"
+TRASNPARENT = "transparent"
 controlFrame= CTkFrame(
     master=app,
     width=350,
     height=200,
-    fg_color="transparent"
+    fg_color=TRASNPARENT
 )
 
 controlFrame.place(
@@ -60,7 +67,7 @@ controlArmFrame = CTkFrame(
     master=app,
     width=250,
     height=200,
-    fg_color="transparent"
+    fg_color=TRASNPARENT
 )
 controlArmFrame.place(
     relx=0.75,
@@ -229,12 +236,12 @@ automaticButton.place(
 
 imageInfoFrame = CTkFrame(
     master=app,
-    width=350,
+    width=380,
     height=250,
-    fg_color="transparent"
+    fg_color=TRASNPARENT
 )
 imageInfoFrame.place(
-    relx=0.48,
+    relx=0.55,
     rely=0.45
 )
 
@@ -242,10 +249,10 @@ imageInfoLabelsFrame = CTkFrame(
     master=app,
     width=80,
     height=250,
-    fg_color="transparent"
+    fg_color=TRASNPARENT
 )
 imageInfoLabelsFrame.place(
-    relx=0.4,
+    relx=0.45,
     rely=0.45
 )
 
@@ -253,18 +260,18 @@ confidentScoreLabelsFrame = CTkFrame(
     master=app,
     width=80,
     height=250,
-    fg_color="transparent"
+    fg_color=TRASNPARENT
 )
 confidentScoreLabelsFrame.place(
-    relx=0.8,
+    relx=0.9,
     rely=0.45
 )
 
 confidentLeftBar = CTkProgressBar(
     master=imageInfoFrame,
-    width=350,
+    width=380,
     height=30,
-    progress_color="#cc00cc"
+    progress_color=COLOR_LEFT
 )
 confidentLeftBar.place(
     relx=0,
@@ -274,9 +281,9 @@ confidentLeftBar.place(
 
 confidentRightBar = CTkProgressBar(
     master=imageInfoFrame,
-    width=350,
+    width=380,
     height=30,
-    progress_color="#0000ff"
+    progress_color=COLOR_RIGHT
 )
 confidentRightBar.place(
     relx=0,
@@ -286,9 +293,9 @@ confidentRightBar.place(
 
 confidentUpBar = CTkProgressBar(
     master=imageInfoFrame,
-    width=350,
+    width=380,
     height=30,
-    progress_color="#00ff00"
+    progress_color=COLOR_UP
 )
 confidentUpBar.place(
     relx=0,
@@ -298,9 +305,9 @@ confidentUpBar.place(
 
 confidentStopBar = CTkProgressBar(
     master=imageInfoFrame,
-    width=350,
+    width=380,
     height=30,
-    progress_color="#ff1a1a"
+    progress_color=COLOR_STOP
 )
 confidentStopBar.place(
     relx=0,
@@ -310,9 +317,9 @@ confidentStopBar.place(
 
 confidentUturnBar = CTkProgressBar(
     master=imageInfoFrame,
-    width=350,
+    width=380,
     height=30,
-    progress_color="#ff9933"
+    progress_color=COLOR_UTURN
 )
 confidentUturnBar.place(
     relx=0,
@@ -504,7 +511,11 @@ def takeCamIP():
     if camSwitchVar.get() == "on":
         global img_url
         img_url = "http://" + inputIPCamEntry.get() + "/capture"
+        global STREAMING
+        STREAMING = True
         print(img_url)
+    else:
+        STREAMING = False
 onOffCamSwitch = CTkSwitch(
     master=controlCameraFrame,
     width=100,
@@ -525,10 +536,11 @@ onOffCamSwitch.place(
 AIresultFrame = CTkFrame(
     master=app,
     width=500,
-    height=100
+    height=100,
+    fg_color=TRASNPARENT
 )
 AIresultFrame.place(
-    relx=0.4,
+    relx=0.5,
     rely=0.88
 )
 
@@ -547,13 +559,51 @@ AIresultNameLabel.place(
     rely=0,
     anchor="nw"
 )
+AIresultVar = StringVar()
+AIresultVar.set("TEST")
+AIresulLabel = CTkLabel(
+    master=AIresultFrame,
+    width=100,
+    height=50,
+    textvariable=AIresultVar,
+    fg_color="#ff5050",
+    font=("Helvetica", 17, "bold"),
+    justify=tkinter.CENTER,
+    corner_radius=20,  
+)
+AIresulLabel.place(
+    relx=0.4,
+    rely=0,
+    anchor="nw"
+)
 
+def updateAIresultLabel():
+    global AI_RESULT
+    global AIresultVar
+    match AI_RESULT:
+        case 0:
+            AIresultVar.set("LEFT")
+            AIresulLabel.configure(fg_color=COLOR_LEFT)
+        case 1:
+            AIresultVar.set("RIGHT")
+            AIresulLabel.configure(fg_color=COLOR_RIGHT)
+        case 2:
+            AIresultVar.set("UP")
+            AIresulLabel.configure(fg_color=COLOR_UP)
+        case 3:
+            AIresultVar.set("STOP")
+            AIresulLabel.configure(fg_color=COLOR_STOP)
+        case 4:
+            AIresultVar.set("U TURN")
+            AIresulLabel.configure(fg_color=COLOR_UTURN)
+        case _:
+            AIresultVar.set("NO RESULT")
+            AIresulLabel.configure(fg_color="#ff5050")
 
 def update_video():
-    streaming=True
-    if streaming:
+    if STREAMING:
         # Replace this URL with the actual URL for your ESP32 camera stream
-        url = "http://192.168.1.6/capture"
+        url = img_url
         
         # Read the video frame from the ESP32 camera
         img_resp = urlopen(url)
@@ -575,8 +625,8 @@ def update_video():
         #give prediction and print the result
         # prediction()
         # print_AI_result()
-        time.sleep(1)
-    canvas.after(100, update_video)
+        time.sleep(0.1)
+    canvas.after(30, update_video)
 canvas = CTkLabel(
     master=cameraFrame, 
     width=400, 
@@ -589,10 +639,11 @@ canvas.place(
     anchor="nw"
 )
 ##################### PROCESS #####################
+STREAMING = False
 AIO_KEY = "aio_AqXF50XhVsRavK3GlO6rBmd34V1V"
 AIO_USERNAME = "Unray"
 AIO_FEED_ID = ["aicamera", "mecanum-behavior", "vertical-arm", "horizontal-arm"]
-BROKER_ADDRESS = "192.168.4.5"
+BROKER_ADDRESS = "192.168.4.3"
 CONFIDENCE = 0.1
 OUPUT_PREDICT_SCORE = [0, 0, 0, 0, 0]
 ###### ADAFRRUIT ######
@@ -644,14 +695,14 @@ def mqttConnect():
     global client
     #client.loop_forever()
 mqttThread = threading.Thread(target=mqttConnect)
-mqttThread.start()
+
 
 
 #img_url = 'http://192.168.98.215/capture'
 img_url = 'http://192.168.1.6/capture'
 #control_url = 'http://192.168.1.6/control?ai_camera='
 counter = 0
-MODEL_FOLDER = 'C://Users//PCPV//Desktop//Code//LogicDesign//model//'
+MODEL_FOLDER = 'C://Users//HOME\Desktop//code//LogicDesign//model//'
 model = load_model(MODEL_FOLDER + 'keras_model.h5')
 
 
@@ -690,9 +741,14 @@ def image_detector():
             max_confidence = output[i]
             max_index = i
     print(max_index, max_confidence)
+
+    global AI_RESULT
+    AI_RESULT = max_index
+
     #take confidence
     global CONFIDENCE
     CONFIDENCE = max_confidence
+
     file = open(MODEL_FOLDER + "labels.txt",encoding="utf8")
     data = file.read().split("\n")
     print("AI Result: ", data[max_index])
@@ -781,14 +837,15 @@ def updateConfidentScore():
         uturnScore = OUPUT_PREDICT_SCORE[4]
         confidentUturnBar.set(uturnScore)
         confidentScoreUturnVar.set(str(round(uturnScore * 100, 3))+ " %")
+
+        updateAIresultLabel()
         time.sleep(0.3)
 
 update_video_thread = threading.Thread(target=update_video)
-one = threading.Thread(target=updateConfidentScore)
+updateDataThread = threading.Thread(target=updateConfidentScore)
 mainThread = threading.Thread(target=main)
 update_video_thread.start()
+#mqttThread.start()
 mainThread.start()
-one.start()
+updateDataThread.start()
 app.mainloop()
-
-print("hello")
